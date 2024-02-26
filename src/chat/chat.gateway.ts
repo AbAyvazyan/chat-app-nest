@@ -4,34 +4,33 @@ import {
   OnGatewayConnection,
   SubscribeMessage,
   WebSocketGateway,
-  WebSocketServer
-} from "@nestjs/websockets";
-import { Server, Socket } from "socket.io";
-import { ChatService } from "./chat.service";
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { ChatService } from './chat.service';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway(8080, { cors: true })
 export class ChatGateway implements OnGatewayConnection {
-
-  constructor(private readonly chatService: ChatService) {
-  }
+  constructor(private readonly chatService: ChatService) {}
 
   @WebSocketServer() server: Server;
 
-  @SubscribeMessage("addMessage")
+  @SubscribeMessage('addMessage')
   async handleAddMessage(
     @MessageBody() message: string,
-    @ConnectedSocket() client: Socket
+    @ConnectedSocket() client: Socket,
   ) {
     await this.chatService.emitMessage(message);
-    this.server.emit("allMessages", await this.chatService.getAllMessages());
+    this.server.emit('allMessages', await this.chatService.getAllMessages());
   }
 
-  @SubscribeMessage("getAllMessages")
+  @SubscribeMessage('getAllMessages')
   async handleGetAllMessages(@ConnectedSocket() client: Socket) {
-    client.emit("allMessages", await this.chatService.getAllMessages());
+    client.emit('allMessages', await this.chatService.getAllMessages());
   }
 
-  handleConnection(client: Socket, ...data: any[]) {
-    console.log("Client connected:", client.id);
+  async handleConnection(client: Socket, ...data: any[]) {
+    console.log('Client connected:', client.id);
+    this.server.emit('allMessages', await this.chatService.getAllMessages());
   }
 }
